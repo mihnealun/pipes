@@ -18,6 +18,7 @@ type Pipeline struct {
 	logger       *log.Logger
 	tracer       trace.Tracer
 	ctx          context.Context
+	next         Processor
 }
 
 func NewPipeline(ctx context.Context, tracer trace.Tracer, logger *log.Logger) *Pipeline {
@@ -45,10 +46,31 @@ func (p *Pipeline) AddTransformer(t Processor) *Pipeline {
 	return p
 }
 
-func (p *Pipeline) Execute(m any) error {
+// Run runs as an independent pipeline
+func (p *Pipeline) Run(m any) error {
 	p.tracer.Start(p.ctx, "pipeline")
 	if len(p.transformers) == 0 {
 		return fmt.Errorf("[Pipeline] no transformers defined")
+	}
+
+	return p.transformers[0].Execute(p.ctx, p.tracer, p.logger, m)
+}
+
+// SetNext for the transformer use, not use in "independent pipeline" mode
+func (p *Pipeline) SetNext(t Processor) {
+	p.next = t
+}
+
+// Execute runs as a transformer
+func (p *Pipeline) Execute(_ context.Context, _ trace.Tracer, _ *log.Logger, m any) error {
+	p.tracer.Start(p.ctx, "pipeline.transformer")
+
+	if m == nil {
+		return fmt.Errorf("[Pipeline] input is empty, skipping")
+	}
+
+	if len(p.transformers) == 0 {
+		return fmt.Errorf("[Pipeline transformer] no transformers defined")
 	}
 
 	return p.transformers[0].Execute(p.ctx, p.tracer, p.logger, m)

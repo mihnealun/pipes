@@ -86,7 +86,7 @@ func main() {
 
 			go func(data amqp091.Delivery, lg *log.Logger) {
 				// execute the pipeline
-				pipeError := ppl.Execute(data.Body)
+				pipeError := ppl.Run(data.Body)
 				if pipeError != nil {
 					lg.Printf("Error transforming message: %v. Message: %s", pipeError, string(data.Body))
 
