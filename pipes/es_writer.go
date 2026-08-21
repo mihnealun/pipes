@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"pipes/elasticsearch"
+	"pipes/connector/output"
 	"pipes/models"
 	"time"
 
@@ -14,11 +14,11 @@ import (
 
 type ESWriter struct {
 	next     Processor
-	esWriter *elasticsearch.ESWriter
+	esWriter *output.ESWriter
 	lastErr  error
 }
 
-func NewESWriter(writer *elasticsearch.ESWriter) *ESWriter {
+func NewESWriter(writer *output.ESWriter) *ESWriter {
 	result := &ESWriter{
 		esWriter: writer,
 		lastErr:  nil,
@@ -36,15 +36,19 @@ func (v *ESWriter) healthCheck() {
 }
 
 func (v *ESWriter) Execute(ctx context.Context, t trace.Tracer, l *log.Logger, m any) error {
-	t.Start(ctx, "pipes.Writer")
+	t.Start(ctx, "pipes.ESWriter")
 
 	if v.lastErr != nil {
-		return fmt.Errorf("no ES connection: %v", v.lastErr)
+		return fmt.Errorf("[ESWriter] no ES connection: %v", v.lastErr)
+	}
+
+	if m == nil {
+		return fmt.Errorf("[ESWriter] input is empty, skipping")
 	}
 
 	message, ok := m.(models.EnrichedEvent)
 	if !ok {
-		return fmt.Errorf("[Writer] expected EnrichedEvent, got %T", m)
+		return fmt.Errorf("[ESWriter] expected EnrichedEvent, got %T", m)
 	}
 
 	b, err := json.Marshal(message)
@@ -54,7 +58,7 @@ func (v *ESWriter) Execute(ctx context.Context, t trace.Tracer, l *log.Logger, m
 
 	err = v.esWriter.Write(ctx, message.MessageId, b)
 	if err != nil {
-		return fmt.Errorf("failed to save document to Elasticsearch: %v", err)
+		return fmt.Errorf("[ESWriter] failed to save document to Elasticsearch: %v", err)
 	}
 
 	if v.next != nil {

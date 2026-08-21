@@ -1,4 +1,4 @@
-package rabbitmq
+package ingest
 
 import (
 	"fmt"
@@ -6,13 +6,13 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type Consumer struct {
+type QueueConsumer struct {
 	conn    *amqp.Connection
 	channel *amqp.Channel
 	Queue   string
 }
 
-func NewConsumer(url, queueName string) (*Consumer, error) {
+func NewQueueConsumer(url, queueName string) (*QueueConsumer, error) {
 	conn, err := amqp.Dial(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to RabbitMQ: %w", err)
@@ -20,7 +20,7 @@ func NewConsumer(url, queueName string) (*Consumer, error) {
 
 	ch, err := conn.Channel()
 	if err != nil {
-		conn.Close()
+		_ = conn.Close()
 		return nil, fmt.Errorf("failed to open a channel: %w", err)
 	}
 
@@ -33,19 +33,19 @@ func NewConsumer(url, queueName string) (*Consumer, error) {
 		nil,
 	)
 	if err != nil {
-		ch.Close()
-		conn.Close()
+		_ = ch.Close()
+		_ = conn.Close()
 		return nil, fmt.Errorf("failed to declare queue: %w", err)
 	}
 
-	return &Consumer{
+	return &QueueConsumer{
 		conn:    conn,
 		channel: ch,
 		Queue:   queueName,
 	}, nil
 }
 
-func (c *Consumer) StartConsuming() (<-chan amqp.Delivery, error) {
+func (c *QueueConsumer) StartConsuming() (<-chan amqp.Delivery, error) {
 	return c.channel.Consume(
 		c.Queue,
 		"",
@@ -57,11 +57,11 @@ func (c *Consumer) StartConsuming() (<-chan amqp.Delivery, error) {
 	)
 }
 
-func (c *Consumer) Close() {
+func (c *QueueConsumer) Close() {
 	if c.channel != nil {
-		c.channel.Close()
+		_ = c.channel.Close()
 	}
 	if c.conn != nil {
-		c.conn.Close()
+		_ = c.conn.Close()
 	}
 }

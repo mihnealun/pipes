@@ -73,6 +73,11 @@ type Validator struct {
 
 func (v *Validator) Execute(ctx context.Context, t trace.Tracer, l *log.Logger, m any) error {
 	t.Start(ctx, "pipes.Validator")
+
+	if m == nil {
+		return fmt.Errorf("[Validator] input is empty, skipping")
+	}
+
 	message, ok := m.([]byte)
 	if !ok {
 		return fmt.Errorf("[Validator] expected []byte, got %T", m)
@@ -84,7 +89,7 @@ func (v *Validator) Execute(ctx context.Context, t trace.Tracer, l *log.Logger, 
 	}
 
 	if !v.isValidMessage(rawEvent) {
-		return fmt.Errorf("invalid message")
+		return fmt.Errorf("[Validator] invalid message")
 	}
 
 	if v.next != nil {

@@ -48,7 +48,7 @@ func (p *Pipeline) AddTransformer(t Processor) *Pipeline {
 func (p *Pipeline) Execute(m any) error {
 	p.tracer.Start(p.ctx, "pipeline")
 	if len(p.transformers) == 0 {
-		return fmt.Errorf("no transformers defined")
+		return fmt.Errorf("[Pipeline] no transformers defined")
 	}
 
 	return p.transformers[0].Execute(p.ctx, p.tracer, p.logger, m)

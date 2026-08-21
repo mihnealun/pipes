@@ -38,13 +38,17 @@ func (v *SQLWriter) healthCheck() {
 func (v *SQLWriter) Execute(ctx context.Context, t trace.Tracer, l *log.Logger, m any) error {
 	t.Start(ctx, "pipes.SQLWriter")
 
+	if m == nil {
+		return fmt.Errorf("[SQLWriter] input is empty, skipping")
+	}
+
 	if v.lastErr != nil {
-		return fmt.Errorf("no SQL connection: %v", v.lastErr)
+		return fmt.Errorf("[SQLWriter] no SQL connection: %v", v.lastErr)
 	}
 
 	message, ok := m.(models.EnrichedEvent)
 	if !ok {
-		return fmt.Errorf("[Writer] expected EnrichedEvent, got %T", m)
+		return fmt.Errorf("[SQLWriter] expected EnrichedEvent, got %T", m)
 	}
 
 	q := `INSERT INTO events (

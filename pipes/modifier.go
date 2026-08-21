@@ -17,10 +17,15 @@ type Modifier struct {
 }
 
 func (v *Modifier) Execute(ctx context.Context, t trace.Tracer, l *log.Logger, m any) error {
-	t.Start(ctx, "pipes.Enricher")
+	t.Start(ctx, "pipes.modifier")
+
+	if m == nil {
+		return fmt.Errorf("[Modifier] input is empty, skipping")
+	}
+
 	message, ok := m.(map[string]any)
 	if !ok {
-		return fmt.Errorf("[Enricher] expected map[string]any, got %T", m)
+		return fmt.Errorf("[Modifier] expected map[string]any, got %T", m)
 	}
 
 	rand2.Seed(time.Now().UnixNano())
