@@ -13,7 +13,7 @@ import (
 	"pipes/models"
 )
 
-// newTestESConnector spins up an httptest server that mimics an
+// newTestESConnector spins up a httptest server that mimics an
 // Elasticsearch node closely enough for the go-elasticsearch client's
 // product check (X-Elastic-Product header) to pass, and returns status
 // for every request.
