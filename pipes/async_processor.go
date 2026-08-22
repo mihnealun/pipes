@@ -22,11 +22,16 @@ func (v *AsyncProcessor) Execute(ctx context.Context, t trace.Tracer, l *log.Log
 	}
 
 	wg := &sync.WaitGroup{}
+	mu := &sync.Mutex{}
 	result := make(map[string]any)
 
 	for n, p := range v.pipes {
 		wg.Go(func() {
-			result[n] = p.Execute(ctx, t, l, m)
+			err := p.Execute(ctx, t, l, m)
+
+			mu.Lock()
+			result[n] = err
+			mu.Unlock()
 		})
 	}
 

@@ -49,6 +49,11 @@ func (p *Pipeline) AddTransformer(t Processor) *Pipeline {
 // Run runs as an independent pipeline
 func (p *Pipeline) Run(m any) error {
 	p.tracer.Start(p.ctx, "pipeline")
+
+	if m == nil {
+		return fmt.Errorf("[Pipeline] input is empty, skipping")
+	}
+
 	if len(p.transformers) == 0 {
 		return fmt.Errorf("[Pipeline] no transformers defined")
 	}
@@ -63,15 +68,15 @@ func (p *Pipeline) SetNext(t Processor) {
 
 // Execute runs as a transformer
 func (p *Pipeline) Execute(_ context.Context, _ trace.Tracer, _ *log.Logger, m any) error {
-	p.tracer.Start(p.ctx, "pipeline.transformer")
-
-	if m == nil {
-		return fmt.Errorf("[Pipeline] input is empty, skipping")
+	err := p.Run(m)
+	if err != nil {
+		p.logger.Printf("[Pipeline transformer] error in pipeline: %v", err)
 	}
 
-	if len(p.transformers) == 0 {
-		return fmt.Errorf("[Pipeline transformer] no transformers defined")
+	// if part of a parent pipeline, run next
+	if p.next != nil {
+		return p.next.Execute(p.ctx, p.tracer, p.logger, m)
 	}
 
-	return p.transformers[0].Execute(p.ctx, p.tracer, p.logger, m)
+	return nil
 }
