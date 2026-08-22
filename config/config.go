@@ -17,6 +17,7 @@ type Config struct {
 	ElasticAPIKey    string
 	DatabaseURL      string
 	DatabaseDriver   string
+	APIAddr          string
 }
 
 func LoadConfig() *Config {
@@ -34,6 +35,7 @@ func LoadConfig() *Config {
 		ElasticAPIKey:    getEnv("ELASTICSEARCH_API_KEY", ""),
 		DatabaseURL:      getEnv("DATABASE_URL", ""),
 		DatabaseDriver:   getEnv("DB_DRIVER", "mysql"),
+		APIAddr:          getEnv("API_ADDR", ":8080"),
 	}
 }
 
